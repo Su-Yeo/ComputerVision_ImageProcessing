@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>편집기</title>
+    <link rel="stylesheet" type="text/css" href="semantic/semantic.css">
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+    <script src="semantic/semantic.js"></script>
+    <script type="text/javascript" src="ImageProcessing.js"></script>
+    <style>
+        nav {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        position: relative;
+        background: #051937;
+        }
+    
+        ul, li {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        }
+
+        #main-menu > li {
+        float: left;
+        /* position: relative; */
+        }
+
+        #main-menu > li > a {
+        font-size: 1rem;
+        color: rgba(255,255,255,0.85);
+        text-align: center;
+        text-decoration: none;
+        letter-spacing: 0.05em;
+        display: block;
+        padding: 14px 36px;
+        border-right: 1px solid rgba(0,0,0,0.15);
+        text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+        }
+
+        #main-menu > li:nth-child(1) > a {
+        border-left: 1px solid rgba(0,0,0,0.15);
+        }
+
+        .sub-menu {
+        position: absolute;
+        background: #182952;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.15s ease-in;
+        z-index: 10;
+        }
+
+        .sub-menu > li {
+        padding: 16px 28px;
+        border-bottom: 1px solid rgba(0,0,0,0.15);
+        font-size: 1rem;
+        color: rgba(255,255,255,0.6);
+        text-decoration: none;
+        }
+
+        /* .sub-menu > li:hover {cursor: pointer;} */
+        li:hover {cursor: pointer;}
+
+        #main-menu > li:hover .sub-menu {
+        opacity: 1;
+        visibility: visible;
+        }
+
+        .sub-menu > li:hover {
+        text-decoration: underline;
+        }
+
+        #outCanvas{
+        border: 1px solid lightgray;
+        /* margin: 50px; */
+        }
+    </style>
+</head>
+ 
+<body onload='init()'>
+    <div class="ui top attached demo menu">
+      <nav role="navigation">
+        <ul id="main-menu">
+            <li><a href="#">메뉴</a>
+                <ul class="sub-menu">
+                    <li><input type ='file' id='inFile' onchange="loadImage()"/></li>
+                    <li onclick="window.print();">저장하기</li>
+                    <li onclick="selectAlgorithm(101)">원본으로</li>
+                </ul>
+            </li>
+            <li id="draw"><a>그리기</a>
+            <ul class="sub-menu">
+                <li class="line" onclick="drawLine();">선그리기</li>
+                <li class="rect" onclick="drawRect();">사각형 그리기</li>
+            </ul>
+            </li>
+            <li id="adjustment"><a>조정</a>
+            <ul class="sub-menu">
+                <li>영상 밝기/어둡기</li>
+                <li onclick="selectAlgorithm(103)">그레이스케일</li>
+                <li>흑백 입력값 기준</li>
+                <li onclick="selectAlgorithm(105)">흑백 평균값 기준</li>
+                <li onclick="selectAlgorithm(106)">흑백 중앙값 기준</li>
+                <li onclick="selectAlgorithm(107)">색상 반전</li>
+                <li onclick="selectAlgorithm(108)">파라볼라(Cap)</li>
+                <li onclick="selectAlgorithm(109)">파라볼라(Cup)</li>
+                <li>감마</li>
+                <li>범위 강조</li>
+                <li onclick="selectAlgorithm(112)">AND마스크</li>
+                <li onclick="selectAlgorithm(113)">포스터라이징</li>
+            </ul>
+            </li>
+            <li id="imageTrans"><a>크기/회전</a>
+            <ul class="sub-menu">
+                <li>축소하기</li>
+                <li>확대하기</li>
+                <li onclick="selectAlgorithm(203)">상하좌우반전</li>
+                <li>90도회전</li>
+                <li>회전</li>
+            </ul>
+            </li>
+            <li id="histo"><a>히스토그램</a>
+                <ul class="sub-menu">
+                    <li onclick="selectAlgorithm(301)">히스토그램 스트레칭</li>
+                    <li onclick="selectAlgorithm(302)">엔드인 탐색</li>
+                    <li onclick="selectAlgorithm(303)">평활화</li>
+                </ul>
+            </li>
+            <li id="filter"><a>필터</a>
+            <ul class="sub-menu">
+                <li onclick="selectAlgorithm(401)">엠보싱</li>
+                <li>블러링</li>
+                <li onclick="selectAlgorithm(403)">가우시안 스무딩</li>
+                <li onclick="selectAlgorithm(404)">샤프닝1</li>
+                <li onclick="selectAlgorithm(405)">샤프닝2</li>
+                <li onclick="selectAlgorithm(406)">고주파 필터 샤프닝</li>
+                <li onclick="selectAlgorithm(407)">저주파 필터 샤프닝</li>
+                <li onclick="selectAlgorithm(408)">경계선1 수직</li>
+                <li onclick="selectAlgorithm(409)">경계선2 수평</li>
+                <li onclick="selectAlgorithm(410)">경계선3 유사</li>
+                <li onclick="selectAlgorithm(411)">경계선4 차연산자</li>
+                <li>경계선5 LoG</li>
+                <li onclick="selectAlgorithm(413)">경계선6 DoG</li>
+            </ul>
+            </li>
+            <li id="hsv"><a>색상/채도/명도</a>
+                <ul class="sub-menu">
+                    <li>채도 변경</li>
+                    <li>명도 변경</li>
+                    <li>색상 추출하기</li>
+                </ul>
+                </li>
+        </ul>
+        </nav>
+    </div>
+    <div class="ui bottom attached segment pushable">
+        <div id="drawSMenu" class="ui inverted right vertical fixed menu sidebar">
+            <form id="form1" onsubmit="return false">
+                <div class="ui right black icon button menu hideSMenu">
+                    닫기<i class="right chevron icon"></i>
+                    <div class="right menu">그리기</div>
+                </div>
+                <div class="item">
+                    색상 <input id="color" type="color" onchange="strokeColor=this.value;">
+                </div>
+                <div class="item">
+                    두께 <input type="range" name="slider" for="result" min="1" max="10" step="1" value="1" style="vertical-align: middle; margin-right:5px;" oninput="result.value=slider.value" onchange="strokeWidth=this.value;">
+                    <input type="number" name="result" for="slider" min="1" max="10" step="1" value="1" style="width:50px;" oninput="slider.value=result.value" onchange="strokeWidth=this.value;">
+                </div>
+                <div class="item line" onclick="drawLine();" >선그리기</div>
+                <div class="item rect" onclick="drawRect();" >사각형그리기</div>
+            </form>
+        </div>
+
+        <!-- <button id="showSMenu" class="ui right floated black button"><i class="left chevron icon"></i>열기</button> -->
+
+        <div id="adjustSMenu" class="ui inverted right vertical fixed menu sidebar">
+            <form id="form2" onsubmit="return false">
+                <div class="ui right black icon button menu hideSMenu">
+                    닫기<i class="right chevron icon"></i>
+                    <div class="right menu">조정</div>
+                </div>
+                <div class="item bright">밝기/어둡기<br>
+                    <input type="range" id="brightSlider" class="brightInput" name="brightSlider" for="brightResult" min="-255" max="255" step="1" value="0" style="vertical-align: middle; margin-right:5px;" oninput="brightResult.value=brightSlider.value" onchange="selectAlgorithm(102);">
+                    <input type="number" name="brightResult" class="brightInput" for="brightSlider" min="-255" max="255" step="1" value="0" style="width:50px;" oninput="brightSlider.value=brightResult.value" onchange="selectAlgorithm(102);">
+                </div>
+                <div class="item" onclick="selectAlgorithm(103);">그레이스케일</div> 
+                <div class="item">흑백 입력값 기준
+                    <input type="number" id="grayInput" min="0" max="255" step="1" value="" style="width:50px;" onchange="selectAlgorithm(104);">
+                </div>
+                <div class="item" onclick="selectAlgorithm(105);">흑백 평균값 기준</div>
+                <div class="item" onclick="selectAlgorithm(106);">흑백 중앙값 기준</div>
+                <div class="item" onclick="selectAlgorithm(107);">색상 반전</div>
+                <div class="item" onclick="selectAlgorithm(108);">파라볼라(Cap)</div>
+                <div class="item" onclick="selectAlgorithm(109);">파라볼라(Cup)</div>
+                <div class="item gamma">감마                
+                    <input type="range" id="gammaSlider" class="gammaInput" name="gammaSlider" for="gammaResult" min="0" max="2" step="0.1" value="1" style="vertical-align: middle; margin-right:5px;" oninput="gammaResult.value=gammaSlider.value" onchange="selectAlgorithm(110);">
+                    <input type="number" name="gammaResult" class="gammaInput" for="gammaSlider" min="0" max="2" step="0.1" value="1" style="width:50px;" oninput="gammaSlider.value=gammaResult.value" onchange="selectAlgorithm(110);">
+                </div>
+                <div class="item stressTrans">범위 강조
+                    <input type="number" id="startRange" min="0" max="255" step="1" value="100" style="width:50px;" onchange="selectAlgorithm(111);">
+                    ~
+                    <input type="number" id="endRange" min="0" max="255" step="1" value="200" style="width:50px;" onchange="selectAlgorithm(111);">
+                </div>
+                <div class="item" onclick="selectAlgorithm(112);">AND마스크</div>
+                <div class="item" onclick="selectAlgorithm(113);">포스터라이징</div>
+            </form>
+        </div>
+
+        <div id="transSMenu" class="ui inverted right vertical fixed menu sidebar">
+            <form id="form3" onsubmit="return false">
+                <div class="ui right black icon button menu hideSMenu">
+                    닫기<i class="right chevron icon"></i>
+                    <div class="right menu">크기/회전</div>
+                </div>
+                <div class="item zoomOut">축소하기<br>
+                    <input type="range" id="zoomOutSlider" name="zoomOutSlider" for="zoomOutResult" min="1" max="10" step="1" value="1" style="vertical-align: middle; margin-right:5px;" oninput="zoomOutResult.value=zoomOutSlider.value" onchange="selectAlgorithm(201);">
+                    <input type="number" name="zoomOutResult" for="zoomOutSlider" min="1" max="10" step="1" value="1" style="width:50px;" oninput="zoomOutSlider.value=zoomOutResult.value" onchange="selectAlgorithm(201);">
+                </div>
+                <div class="item zoomIn">확대하기<br>
+                    <input type="range" id="zoomInSlider" name="zoomInSlider" for="zoomInResult" min="1" max="10" step="1" value="1" style="vertical-align: middle; margin-right:5px;" oninput="zoomInResult.value=zoomInSlider.value" onchange="selectAlgorithm(202);">
+                    <input type="number" name="zoomInResult" for="zoomInSlider" min="1" max="10" step="1" value="1" style="width:50px;" oninput="zoomInSlider.value=zoomInResult.value" onchange="selectAlgorithm(202);">
+                </div>
+                <div class="item" onclick="selectAlgorithm(203);">상하좌우반전</div> 
+                <div class="item">90도회전
+                    <input type="number" id="image90" min="0" max="360" step="90" value="0" style="width:50px;" onchange="selectAlgorithm(204);">
+                </div>
+                <div class="item rotat">회전하기<br>
+                    <input type="range" id="rotatSlider" name="rotatSlider" for="rotatResult" min="0" max="360" step="1" value="0" style="vertical-align: middle; margin-right:5px;" oninput="rotatResult.value=rotatSlider.value" onchange="selectAlgorithm(205);">
+                    <input type="number" name="rotatResult" for="rotatSlider" min="0" max="360" step="1" value="0" style="width:50px;" oninput="rotatSlider.value=rotatResult.value" onchange="selectAlgorithm(205);">
+                </div>
+            </form>
+        </div>
+
+        <div id="histoSMenu" class="ui inverted right vertical fixed menu sidebar">
+            <form id="form4" onsubmit="return false">
+                <div class="ui right black icon button menu hideSMenu">
+                    닫기<i class="right chevron icon"></i>
+                    <div class="right menu">히스토그램</div>
+                </div>
+                <div class="item" onclick="selectAlgorithm(301);">히스토그램 스트레칭</div> 
+                <div class="item" onclick="selectAlgorithm(302);">엔드인 탐색</div> 
+                <div class="item" onclick="selectAlgorithm(303);">평활화</div> 
+            </form>
+        </div>
+        
+        <div id="filterSMenu" class="ui inverted right vertical fixed menu sidebar">
+            <form id="form5" onsubmit="return false">
+                <div class="ui right black icon button menu hideSMenu">
+                    닫기<i class="right chevron icon"></i>
+                    <div class="right menu">필터</div>
+                </div>
+                <div class="item" onclick="selectAlgorithm(401);">엠보싱</div> 
+                <div class="item blurring">블러링<br>
+                    <input type="range" id="blurSlider" name="blurSlider" for="blurResult" min="1" max="10" step="1" value="1" style="vertical-align: middle; margin-right:5px;" oninput="blurResult.value=blurSlider.value" onchange="selectAlgorithm(402);">
+                    <input type="number" name="blurResult" for="blurSlider" min="1" max="10" step="1" value="1" style="width:50px;" oninput="blurSlider.value=blurResult.value" onchange="selectAlgorithm(402);">
+                </div>
+                <div class="item" onclick="selectAlgorithm(403);">가우시안 스무딩</div> 
+                <div class="item" onclick="selectAlgorithm(404);">샤프닝1</div> 
+                <div class="item" onclick="selectAlgorithm(405);">샤프닝2</div> 
+                <div class="item" onclick="selectAlgorithm(406);">고주파 필터 샤프닝</div> 
+                <div class="item" onclick="selectAlgorithm(407);">저주파 필터 샤프닝</div> 
+                <div class="item" onclick="selectAlgorithm(408);">경계선1 수직</div> 
+                <div class="item" onclick="selectAlgorithm(409);">경계선2 수평</div> 
+                <div class="item" onclick="selectAlgorithm(410);">경계선3 유사</div> 
+                <div class="item" onclick="selectAlgorithm(411);">경계선4 차연산자</div> 
+                <div class="item">경계선5 LoG 
+                    <div class="ui mini buttons">
+                        <button class="ui button" value="1" onclick="log=this.value;selectAlgorithm(412);">1</button>
+                        <button class="ui button" value="2" onclick="log=this.value;selectAlgorithm(412);">2</button>
+                        <button class="ui button" value="3" onclick="log=this.value;selectAlgorithm(412);">3</button>
+                    </div>
+                </div> 
+                <div class="item" onclick="selectAlgorithm(413);">경계선6 DoG</div> 
+            </form>
+        </div>
+
+        <div id="hsvSMenu" class="ui inverted right vertical fixed menu sidebar">
+            <form id="form6" onsubmit="return false">
+                <div class="ui right black icon button menu hideSMenu">
+                    닫기<i class="right chevron icon"></i>
+                    <div class="right menu">색상/채도/명도</div>
+                </div>
+                <div class="item satu">채도 변경<br>
+                    <input type="range" id="satuSlider" name="satuSlider" for="satuResult" min="-1" max="1" step="0.1" value="0" style="vertical-align: middle; margin-right:5px;" oninput="satuResult.value=satuSlider.value" onchange="selectAlgorithm(501);">
+                    <input type="number" name="satuResult" for="satuSlider" min="-1" max="1" step="0.1" value="0" style="width:50px;" oninput="satuSlider.value=satuResult.value" onchange="selectAlgorithm(501);">
+                </div>
+                <div class="item value">명도 변경<br>
+                    <input type="range" id="valueSlider" name="valueSlider" for="valueResult" min="-1" max="1" step="0.1" value="0" style="vertical-align: middle; margin-right:5px;" oninput="valueResult.value=valueSlider.value" onchange="selectAlgorithm(502);">
+                    <input type="number" name="valueResult" for="valueSlider" min="-1" max="1" step="0.1" value="0" style="width:50px;" oninput="valueSlider.value=valueResult.value" onchange="selectAlgorithm(502);">
+                </div>
+                <div class="item hue">색상 추출하기<br><br>
+                    <!-- <input id="hue" type="color" onchange="selectAlgorithm(503);"> -->
+                    <select class="ui dropdown" id="hueSelect" style="height: 35px; padding: 0 0.5em; margin-right: 10px;" onchange="selectAlgorithm(503);">
+                        <option value="">Color</option>
+                    </select>
+                    색상 범위<input type="number" id="hueRange" min="1" max="360" step="1" value="30" style="width:50px; height:35px; margin-left:5px;" onchange="selectAlgorithm(503);">
+                </div>
+            </form>
+        </div>
+
+        <div class="pusher">
+            <div class="ui mini labeled icon menu" style="border: none;border-radius: 0px;">
+                <div class="item line" onclick="selectLine()">
+                  <i class="mouse pointer icon"></i>
+                  자유형 선택
+                </div>
+                <div class="item rect" onclick="selectRect()">
+                  <i class="object ungroup outline icon"></i>
+                  사각형 선택
+                </div>
+                <div class="item" onclick='hop-=0.2;displayImage()'>
+                  <i class="zoom-out icon"></i>
+                  축소
+                </div>
+                <div class="item" onclick='hop+=0.2;displayImage()'>
+                  <i class="zoom-in icon"></i>
+                  확대
+                </div>
+            </div>
+            <div class="ui basic segment">
+                <form>
+                    <canvas id="inCanvas" style="display:none;"></canvas>
+                    <canvas id="outCanvas" style="margin:0 auto; display:block;"></canvas>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        $('#draw').click(function(){
+            $('#drawSMenu').sidebar({context: $('.bottom.segment')}).sidebar('setting',{ closable:false, dimPage:false, exclusive:true })
+            .sidebar('setting', 'transition', 'overlay').sidebar('show');
+        });
+        $('#adjustment').click(function(){
+            $('#adjustSMenu').sidebar({context: $('.bottom.segment')}).sidebar('setting',{ closable:false, dimPage:false, exclusive:true })
+            .sidebar('setting', 'transition', 'overlay').sidebar('show');
+        });
+        $('#imageTrans').click(function(){
+            $('#transSMenu').sidebar({context: $('.bottom.segment')}).sidebar('setting',{ closable:false, dimPage:false, exclusive:true })
+            .sidebar('setting', 'transition', 'overlay').sidebar('show');
+        });
+        $('#histo').click(function(){
+            $('#histoSMenu').sidebar({context: $('.bottom.segment')}).sidebar('setting',{ closable:false, dimPage:false, exclusive:true })
+            .sidebar('setting', 'transition', 'overlay').sidebar('show');
+        });
+        $('#filter').click(function(){
+            $('#filterSMenu').sidebar({context: $('.bottom.segment')}).sidebar('setting',{ closable:false, dimPage:false, exclusive:true })
+            .sidebar('setting', 'transition', 'overlay').sidebar('show');
+        });
+        $('#hsv').click(function(){
+            $('#hsvSMenu').sidebar({context: $('.bottom.segment')}).sidebar('setting',{ closable:false, dimPage:false, exclusive:true })
+            .sidebar('setting', 'transition', 'overlay').sidebar('show');
+            for (var i = 0; i <= 360; i+=15) {
+                $("#hueSelect").append('<option value="'+i+'" style="background-color:hsl('+i+', 100%, 50%)">'+i+'</option>');
+            }
+        });
+        $('.hideSMenu').click(function(){
+            $('.sidebar').sidebar({context: $('.bottom.segment')}).sidebar('setting',{ closable:false, dimPage:false, exclusive:true })
+            .sidebar('setting', 'transition', 'overlay').sidebar('hide');
+            // $('#showSMenu').show();
+        });
+        
+    </script>
+</body>
+ 
+</html>
